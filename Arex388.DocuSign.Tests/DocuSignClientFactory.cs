@@ -8,16 +8,36 @@ public sealed class DocuSignClientFactory {
 
 	[Fact]
 	public void CreateAndCacheClient() {
-		var created = _docuSignFactory.CreateClient(Config.IntegrationKey1, Config.UserId1, Config.PublicKey1, Config.PrivateKey1);
-		var cached = _docuSignFactory.CreateClient(Config.IntegrationKey1, Config.UserId1, Config.PublicKey1, Config.PrivateKey1);
+		var created = _docuSignFactory.CreateClient(new DocuSignClientOptions {
+			IntegrationKey = Config.IntegrationKey1,
+			PrivateKey = Config.PrivateKey1,
+			PublicKey = Config.PublicKey1,
+			UserId = Config.UserId1
+		});
+		var cached = _docuSignFactory.CreateClient(new DocuSignClientOptions {
+			IntegrationKey = Config.IntegrationKey1,
+			PrivateKey = Config.PrivateKey1,
+			PublicKey = Config.PublicKey1,
+			UserId = Config.UserId1
+		});
 
 		Assert.Equal(created, cached);
 	}
 
 	[Fact]
 	public void CreateClients() {
-		var client1 = _docuSignFactory.CreateClient(Config.IntegrationKey1, Config.UserId1, Config.PublicKey1, Config.PrivateKey1);
-		var client2 = _docuSignFactory.CreateClient(Config.IntegrationKey2, Config.UserId2, Config.PublicKey2, Config.PrivateKey2);
+		var client1 = _docuSignFactory.CreateClient(new DocuSignClientOptions {
+			IntegrationKey = Config.IntegrationKey1,
+			PrivateKey = Config.PrivateKey1,
+			PublicKey = Config.PublicKey1,
+			UserId = Config.UserId1
+		});
+		var client2 = _docuSignFactory.CreateClient(new DocuSignClientOptions {
+			IntegrationKey = Config.IntegrationKey2,
+			PrivateKey = Config.PrivateKey2,
+			PublicKey = Config.PublicKey2,
+			UserId = Config.UserId2
+		});
 
 		Assert.NotNull(client1);
 		Assert.NotNull(client2);

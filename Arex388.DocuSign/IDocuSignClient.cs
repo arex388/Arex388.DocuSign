@@ -1,5 +1,8 @@
 ﻿namespace Arex388.DocuSign;
 
+/// <summary>
+/// DocuSign API client.
+/// </summary>
 public interface IDocuSignClient {
 	/// <summary>
 	/// Create an envelope.

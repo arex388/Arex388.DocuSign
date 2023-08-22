@@ -9,7 +9,12 @@ public class DocuSignClientFactory {
 
 	[Benchmark]
 	public void CreateAndCacheClient() {
-		var client = _docuSignFactory.CreateClient(Config.IntegrationKey, Config.UserId, Config.PublicKey, Config.PrivateKey);
+		var client = _docuSignFactory.CreateClient(new DocuSignClientOptions {
+			IntegrationKey = Config.IntegrationKey,
+			PrivateKey = Config.PrivateKey,
+			PublicKey = Config.PublicKey,
+			UserId = Config.UserId
+		});
 
 		_ = client.ToString();
 	}

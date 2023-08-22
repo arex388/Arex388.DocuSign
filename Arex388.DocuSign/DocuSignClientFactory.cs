@@ -29,32 +29,18 @@ public sealed class DocuSignClientFactory :
 	/// <summary>
 	/// Create and cache an instance of the DocuSign API client.
 	/// </summary>
-	/// <param name="integrationKey">Your DocuSign integration key. The value will be used as the cache identifier.</param>
-	/// <param name="userId">Your DocuSign user's id.</param>
-	/// <param name="publicKey">Your DocuSign public encryption key.</param>
-	/// <param name="privateKey">Your DocuSign private encryption key.</param>
-	/// <param name="isProduction">Flag indicating if the client will use development or production endpoints.</param>
+	/// <param name="options">DocuSign options container.</param>
 	/// <returns>A new or cached instance of <c>DocuSignClient</c>.</returns>
 	public IDocuSignClient CreateClient(
-		Guid integrationKey,
-		Guid userId,
-		string publicKey,
-		string privateKey,
-		bool isProduction = false) {
-		var key = $"{nameof(Arex388)}.{nameof(DocuSign)}.Key[{integrationKey}]";
+		DocuSignClientOptions options) {
+		var key = $"{nameof(Arex388)}.{nameof(DocuSign)}.Key[{options.IntegrationKey}]";
 
 		if (_memoryCache.TryGetValue(key, out IDocuSignClient? docuSignClient)
 			&& docuSignClient is not null) {
 			return docuSignClient;
 		}
 
-		docuSignClient = new DocuSignClient(_httpClient, new DocuSignClientOptions {
-			IntegrationKey = integrationKey,
-			IsProduction = isProduction,
-			PrivateKey = privateKey,
-			PublicKey = publicKey,
-			UserId = userId
-		});
+		docuSignClient = new DocuSignClient(_httpClient, options);
 
 		_memoryCache.Set(key, docuSignClient, _memoryCacheEntryOptions);
 
