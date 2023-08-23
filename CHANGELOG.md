@@ -1,3 +1,7 @@
+#### 1.0.2 (2023-08-23)
+
+- Added the ability to set an expiration on an envelope.
+
 #### 1.0.1 (2023-08-22)
 
 - Minor cleanup and fixes.

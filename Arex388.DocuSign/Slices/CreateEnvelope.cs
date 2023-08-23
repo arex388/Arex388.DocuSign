@@ -52,6 +52,11 @@ public sealed class CreateEnvelope {
 		public string EmailSubject { get; init; } = null!;
 
 		/// <summary>
+		/// The envelope's notification settings.
+		/// </summary>
+		public EnvelopeNotification? Notification { get; init; }
+
+		/// <summary>
 		/// The envelope's recipients.
 		/// </summary>
 		public EnvelopeRecipients Recipients { get; init; } = null!;
