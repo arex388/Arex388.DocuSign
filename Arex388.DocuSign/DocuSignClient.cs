@@ -151,11 +151,59 @@ public sealed class DocuSignClient :
 
 			var error = await response.Content.ReadFromJsonAsync<FailedResponse>(_jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
 
-			return CreateEnvelope.Failed($"[{error!.Code}] {error.Message}");
+			return CreateEnvelope.Failed(error!.ToString());
 		} catch (TaskCanceledException) {
 			return CreateEnvelope.TimedOut;
 		} catch (Exception e) {
 			return CreateEnvelope.Failed(e);
+		}
+	}
+
+	/// <summary>
+	/// Get an envelope.
+	/// </summary>
+	/// <param name="request">An instance of <c>GetEnvelope.Request</c> containing the request's parameters.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An instance of <c>GetEnvelope.Response</c>.</returns>
+	public async Task<GetEnvelope.Response> GetEnvelopeAsync(
+		GetEnvelope.Request request,
+		CancellationToken cancellationToken = default) {
+		if (cancellationToken.IsCancellationRequested) {
+			return GetEnvelope.Cancelled;
+		}
+
+		await WaitForAuthorizationAsync().ConfigureAwait(false);
+
+		var validator = new GetEnvelopeRequestValidator();
+		var validation = validator.Validate(request);
+
+		if (!validation.IsValid) {
+			return GetEnvelope.Invalid(validation);
+		}
+
+		if (cancellationToken.IsCancellationRequested) {
+			return GetEnvelope.Cancelled;
+		}
+
+		try {
+			var response = await _httpClient.GetAsync(request.GetEndpoint(Account!), cancellationToken).ConfigureAwait(false);
+
+			if (response.IsSuccessStatusCode) {
+				var envelope = await response.Content.ReadFromJsonAsync<Envelope>(_jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+
+				return new GetEnvelope.Response {
+					Envelope = envelope!,
+					Status = ResponseStatus.Succeeded
+				};
+			}
+
+			var error = await response.Content.ReadFromJsonAsync<FailedResponse>(_jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+
+			return GetEnvelope.Failed(error!.ToString());
+		} catch (TaskCanceledException) {
+			return GetEnvelope.TimedOut;
+		} catch (Exception e) {
+			return GetEnvelope.Failed(e);
 		}
 	}
 
@@ -196,7 +244,7 @@ public sealed class DocuSignClient :
 
 			var error = await response.Content.ReadFromJsonAsync<FailedResponse>(_jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
 
-			return UpdateEnvelope.Failed($"[{error!.Code}] {error.Message}");
+			return UpdateEnvelope.Failed(error!.ToString());
 		} catch (TaskCanceledException) {
 			return UpdateEnvelope.TimedOut;
 		} catch (Exception e) {

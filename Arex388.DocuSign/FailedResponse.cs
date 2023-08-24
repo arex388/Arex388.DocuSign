@@ -7,4 +7,6 @@ internal sealed class FailedResponse {
 	public string Code { get; init; } = null!;
 
 	public string Message { get; init; } = null!;
+
+	public override string ToString() => $"[{Code}] {Message}";
 }

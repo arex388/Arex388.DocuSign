@@ -23,7 +23,21 @@ public sealed class Envelope {
 	/// The envelope's most recent status change timestamp in UTC.
 	/// </summary>
 	[JsonPropertyName("statusDateTime")]
-	public DateTimeOffset StatusAtUtc { get; init; }
+	public DateTimeOffset StatusAtUtc { get; set; }
+
+	/// <summary>
+	/// DO NOT USE THIS PROPERTY. USE <c>StatusAtUtc</c> INSTEAD. This property exists only to satisfy multiple names for the same property from DocuSign's API.
+	/// </summary>
+	[JsonPropertyName("statusChangedDateTime")]
+	public DateTimeOffset? StatusAtUtc2 {
+		init {
+			if (!value.HasValue) {
+				return;
+			}
+
+			StatusAtUtc = value.Value;
+		}
+	}
 
 	/// <summary>
 	/// The envelope's URL.

@@ -10,8 +10,18 @@ public interface IDocuSignClient {
 	/// <param name="request">An instance of <c>CreateEnvelope.Request</c> containing the request's parameters.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An instance of <c>CreateEnvelope.Response</c>.</returns>
-	public Task<CreateEnvelope.Response> CreateEnvelopeAsync(
+	Task<CreateEnvelope.Response> CreateEnvelopeAsync(
 		CreateEnvelope.Request request,
+		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Get an envelope.
+	/// </summary>
+	/// <param name="request">An instance of <c>GetEnvelope.Request</c> containing the request's parameters.</param>
+	/// <param name="cancellationToken">The cancellation token.</param>
+	/// <returns>An instance of <c>GetEnvelope.Response</c>.</returns>
+	Task<GetEnvelope.Response> GetEnvelopeAsync(
+		GetEnvelope.Request request,
 		CancellationToken cancellationToken = default);
 
 	/// <summary>
@@ -20,7 +30,7 @@ public interface IDocuSignClient {
 	/// <param name="request">An instance of <c>UpdateEnvelope.Request</c> containing the request's parameters.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An instance of <c>UpdateEnvelope.Response</c>.</returns>
-	public Task<UpdateEnvelope.Response> UpdateEnvelopeAsync(
+	Task<UpdateEnvelope.Response> UpdateEnvelopeAsync(
 		UpdateEnvelope.Request request,
 		CancellationToken cancellationToken = default);
 
@@ -30,7 +40,7 @@ public interface IDocuSignClient {
 	/// <param name="request">An instance of <c>VoidEnvelope.Request</c> containing the request's parameters.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>An instance of <c>UpdateEnvelope.Response</c>.</returns>
-	public Task<UpdateEnvelope.Response> VoidEnvelopeAsync(
+	Task<UpdateEnvelope.Response> VoidEnvelopeAsync(
 		VoidEnvelope.Request request,
 		CancellationToken cancellationToken = default);
 

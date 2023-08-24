@@ -11,7 +11,7 @@ public sealed class Envelope {
 	});
 
 	[Fact]
-	public async Task CreateAsync() {
+	public async Task CreateAndGetAndVoidAsync() {
 		var pdfBytes = await File.ReadAllBytesAsync(Config.DocuSignFilePath).ConfigureAwait(false);
 		var create = await _docuSign.CreateEnvelopeAsync(new CreateEnvelope.Request {
 			Documents = new[] {
@@ -51,6 +51,12 @@ public sealed class Envelope {
 
 		Assert.Equal(ResponseStatus.Succeeded, create.Status);
 		Assert.NotNull(create.Envelope);
+
+		var get = await _docuSign.GetEnvelopeAsync(new GetEnvelope.Request {
+			Id = create.Envelope.Id
+		}).ConfigureAwait(false);
+
+		Assert.Equal(ResponseStatus.Succeeded, get.Status);
 
 		var @void = await _docuSign.VoidEnvelopeAsync(new VoidEnvelope.Request {
 			Id = create.Envelope.Id,

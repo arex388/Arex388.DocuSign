@@ -1,3 +1,8 @@
+#### 1.0.3 (2023-08-24)
+
+- **Added:** The ability to query (limited) an envelope with `GetEnvelopeAsync()`.
+- Minor internal changes.
+
 #### 1.0.2 (2023-08-23)
 
 - Added the ability to set an expiration on an envelope.
