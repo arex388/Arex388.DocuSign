@@ -208,6 +208,16 @@ public sealed class DocuSignClient :
 	}
 
 	/// <summary>
+	/// Get the user authorization URL.
+	/// </summary>
+	/// <param name="redirectUrl">The URL to redirect to after the user is authorized. The URL must be identical to one or more enabled redirect URLs in DocuSign.</param>
+	/// <returns>The URL string.</returns>
+	public string GetUserAuthorizationUrl(
+		string redirectUrl) => _options.IsProduction
+		? $"https://account.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id={_options.IntegrationKey}&redirect_uri={redirectUrl}"
+		: $"https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id={_options.IntegrationKey}&redirect_uri={redirectUrl}";
+
+	/// <summary>
 	/// Update an envelope.
 	/// </summary>
 	/// <param name="request">An instance of <c>UpdateEnvelope.Request</c> containing the request's parameters.</param>

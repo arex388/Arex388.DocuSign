@@ -25,6 +25,14 @@ public interface IDocuSignClient {
 		CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// Get the user authorization URL.
+	/// </summary>
+	/// <param name="redirectUrl">The URL to redirect to after the user is authorized. The URL must be identical to one or more enabled redirect URLs in DocuSign.</param>
+	/// <returns>The URL string.</returns>
+	string GetUserAuthorizationUrl(
+		string redirectUrl);
+
+	/// <summary>
 	/// Update an envelope.
 	/// </summary>
 	/// <param name="request">An instance of <c>UpdateEnvelope.Request</c> containing the request's parameters.</param>

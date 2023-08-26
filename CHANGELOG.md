@@ -1,3 +1,7 @@
+#### 1.0.4 (2023-08-25)
+
+- **Added:** The ability to get the user authorization URL with `GetUserAuthorizationUrl()`.
+
 #### 1.0.3 (2023-08-24)
 
 - **Added:** The ability to query (limited) an envelope with `GetEnvelopeAsync()`.
