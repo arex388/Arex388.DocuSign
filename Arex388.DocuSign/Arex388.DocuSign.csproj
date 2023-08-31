@@ -11,7 +11,7 @@
 		<PackageTags>docusign docusign.com e-signature arex388</PackageTags>
 		<RepositoryUrl>https://github.com/arex388/Arex388.DocuSign</RepositoryUrl>
 		<TargetFramework>netstandard2.0</TargetFramework>
-		<Version>1.0.4</Version>
+		<Version>1.0.5</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

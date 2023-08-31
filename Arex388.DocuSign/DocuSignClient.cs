@@ -30,6 +30,8 @@ public sealed class DocuSignClient :
 	private readonly Urls _urls;
 
 	private AuthorizationUserAccount? Account { get; set; }
+	private DateTimeOffset AuthorizedAt { get; set; }
+	private bool IsAuthorized => (int)(AuthorizedAt - DateTimeOffset.Now).TotalHours < 45 && Account is not null;
 
 	private CreateEnvelopeRequestValidator? _createEnvelopeRequestValidator;
 	private EnvelopeRecipientsValidator? _envelopeRecipientsValidator;
@@ -60,8 +62,6 @@ public sealed class DocuSignClient :
 				? "https://account.docusign.com/oauth/userinfo"
 				: "https://account-d.docusign.com/oauth/userinfo"
 		};
-
-		Task.Run(RefreshAuthorizationAsync);
 	}
 
 	//	============================================================================
@@ -355,52 +355,46 @@ public sealed class DocuSignClient :
 	}
 
 	/// <summary>
-	/// Refresh the authorization every 45 minutes.
+	/// Refresh the authorization.
 	/// </summary>
 	private async Task RefreshAuthorizationAsync() {
-		while (true) {
-			var jwt = GetJwt();
-			var form = new FormUrlEncodedContent(new[] {
-				new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
-				new KeyValuePair<string, string>("assertion", jwt)
-			});
+		Account = null;
 
-			var authorizationResponse = await _httpClient.PostAsync(_urls.AuthorizationToken, form).ConfigureAwait(false);
+		var jwt = GetJwt();
+		var form = new FormUrlEncodedContent(new[] {
+			new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
+			new KeyValuePair<string, string>("assertion", jwt)
+		});
 
-			if (!authorizationResponse.IsSuccessStatusCode) {
-				continue;
-			}
+		var authorizationResponse = await _httpClient.PostAsync(_urls.AuthorizationToken, form).ConfigureAwait(false);
 
-			var authorization = await authorizationResponse.Content.ReadFromJsonAsync<Authorization>().ConfigureAwait(false);
-
-			if (authorization is null) {
-				continue;
-			}
-
-			_httpClient.DefaultRequestHeaders.Remove("Authorization");
-			_httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authorization.Token}");
-
-			var userResponse = await _httpClient.GetFromJsonAsync<AuthorizationUser>(_urls.AuthorizationUser).ConfigureAwait(false);
-
-			if (userResponse is null) {
-				continue;
-			}
-
-			Account = userResponse.DefaultAccount;
-
-			await Task.Delay(TimeSpan.FromMinutes(45)).ConfigureAwait(false);
-
-			Account = null;
+		if (!authorizationResponse.IsSuccessStatusCode) {
+			return;
 		}
-		// ReSharper disable once FunctionNeverReturns
+
+		var authorization = await authorizationResponse.Content.ReadFromJsonAsync<Authorization>().ConfigureAwait(false);
+
+		if (authorization is null) {
+			return;
+		}
+
+		_httpClient.DefaultRequestHeaders.Remove("Authorization");
+		_httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authorization.Token}");
+
+		var userResponse = await _httpClient.GetFromJsonAsync<AuthorizationUser>(_urls.AuthorizationUser).ConfigureAwait(false);
+
+		if (userResponse is null) {
+			return;
+		}
+
+		Account = userResponse.DefaultAccount;
+		AuthorizedAt = DateTimeOffset.Now;
 	}
 
 	/// <summary>
 	/// Waits for the authorization refresh to complete.
 	/// </summary>
-	private async Task WaitForAuthorizationAsync() {
-		while (Account is null) {
-			await Task.Delay(25).ConfigureAwait(false);
-		}
-	}
+	private Task WaitForAuthorizationAsync() => IsAuthorized
+		? Task.CompletedTask
+		: RefreshAuthorizationAsync();
 }

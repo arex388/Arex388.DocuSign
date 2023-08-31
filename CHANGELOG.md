@@ -1,3 +1,7 @@
+#### 1.0.5 (2023-08-31)
+
+- **Changed:** Removed the internal auto-regeneration for the JWT on a 45-minute delay. Instead when API calls are made, the call will wait for the JWT to be refreshed and authorization to be completed first.
+
 #### 1.0.4 (2023-08-25)
 
 - **Added:** The ability to get the user authorization URL with `GetUserAuthorizationUrl()`.
