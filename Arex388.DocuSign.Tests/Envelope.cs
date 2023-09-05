@@ -5,6 +5,7 @@ namespace Arex388.DocuSign.Tests;
 public sealed class Envelope {
 	private readonly IDocuSignClient _docuSign = new DocuSignClient(new HttpClient(), new DocuSignClientOptions {
 		IntegrationKey = Config.IntegrationKey1,
+		IsProduction = true,
 		PrivateKey = Config.PrivateKey1,
 		PublicKey = Config.PublicKey1,
 		UserId = Config.UserId1

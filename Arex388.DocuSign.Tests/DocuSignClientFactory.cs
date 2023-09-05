@@ -10,12 +10,14 @@ public sealed class DocuSignClientFactory {
 	public void CreateAndCacheClient() {
 		var created = _docuSignFactory.CreateClient(new DocuSignClientOptions {
 			IntegrationKey = Config.IntegrationKey1,
+			IsProduction = true,
 			PrivateKey = Config.PrivateKey1,
 			PublicKey = Config.PublicKey1,
 			UserId = Config.UserId1
 		});
 		var cached = _docuSignFactory.CreateClient(new DocuSignClientOptions {
 			IntegrationKey = Config.IntegrationKey1,
+			IsProduction = true,
 			PrivateKey = Config.PrivateKey1,
 			PublicKey = Config.PublicKey1,
 			UserId = Config.UserId1
@@ -28,12 +30,14 @@ public sealed class DocuSignClientFactory {
 	public void CreateClients() {
 		var client1 = _docuSignFactory.CreateClient(new DocuSignClientOptions {
 			IntegrationKey = Config.IntegrationKey1,
+			IsProduction = true,
 			PrivateKey = Config.PrivateKey1,
 			PublicKey = Config.PublicKey1,
 			UserId = Config.UserId1
 		});
 		var client2 = _docuSignFactory.CreateClient(new DocuSignClientOptions {
 			IntegrationKey = Config.IntegrationKey2,
+			IsProduction = true,
 			PrivateKey = Config.PrivateKey2,
 			PublicKey = Config.PublicKey2,
 			UserId = Config.UserId2

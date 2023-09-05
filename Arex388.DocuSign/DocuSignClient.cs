@@ -31,7 +31,7 @@ public sealed class DocuSignClient :
 
 	private AuthorizationUserAccount? Account { get; set; }
 	private DateTimeOffset AuthorizedAt { get; set; }
-	private bool IsAuthorized => (int)(AuthorizedAt - DateTimeOffset.Now).TotalHours < 45 && Account is not null;
+	private bool IsAuthorized => (int)(AuthorizedAt - DateTimeOffset.Now).TotalMinutes < 45 && Account is not null;
 
 	private CreateEnvelopeRequestValidator? _createEnvelopeRequestValidator;
 	private EnvelopeRecipientsValidator? _envelopeRecipientsValidator;
@@ -158,6 +158,17 @@ public sealed class DocuSignClient :
 			return CreateEnvelope.Failed(e);
 		}
 	}
+
+	/// <summary>
+	/// Get the client's diagnostic information.
+	/// </summary>
+	public object GetDiagnosticInformation() => new {
+		Account,
+		AuthorizedAt,
+		IsAuthorized,
+		Options = _options,
+		Urls = _urls
+	};
 
 	/// <summary>
 	/// Get an envelope.

@@ -1,3 +1,7 @@
+#### 1.0.6 (2023-09-05)
+
+- Bug fix for authorization tracking.
+
 #### 1.0.5 (2023-08-31)
 
 - **Changed:** Removed the internal auto-regeneration for the JWT on a 45-minute delay. Instead when API calls are made, the call will wait for the JWT to be refreshed and authorization to be completed first.
