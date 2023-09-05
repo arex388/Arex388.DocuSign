@@ -15,11 +15,6 @@ public interface IDocuSignClient {
 		CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Get the client's diagnostic information.
-	/// </summary>
-	object GetDiagnosticInformation();
-
-	/// <summary>
 	/// Get an envelope.
 	/// </summary>
 	/// <param name="request">An instance of <c>GetEnvelope.Request</c> containing the request's parameters.</param>

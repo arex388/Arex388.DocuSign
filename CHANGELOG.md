@@ -1,3 +1,7 @@
+#### 1.0.7 (2023-09-05)
+
+- Removed authorization tracking all together. Each call will now refresh the authorization token, which will come with a slight performance impact. Since DocuSign wants to make a ridiculously complicated authorization process under the pretense of "security", I'll just skip it and force their API to generate new tokens on each request.
+
 #### 1.0.6 (2023-09-05)
 
 - Bug fix for authorization tracking.

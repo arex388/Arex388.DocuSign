@@ -30,8 +30,6 @@ public sealed class DocuSignClient :
 	private readonly Urls _urls;
 
 	private AuthorizationUserAccount? Account { get; set; }
-	private DateTimeOffset AuthorizedAt { get; set; }
-	private bool IsAuthorized => (int)(AuthorizedAt - DateTimeOffset.Now).TotalMinutes < 45 && Account is not null;
 
 	private CreateEnvelopeRequestValidator? _createEnvelopeRequestValidator;
 	private EnvelopeRecipientsValidator? _envelopeRecipientsValidator;
@@ -81,7 +79,11 @@ public sealed class DocuSignClient :
 			return CreateEnvelope.Cancelled;
 		}
 
-		await WaitForAuthorizationAsync().ConfigureAwait(false);
+		var refreshed = await RefreshAuthorizationAsync().ConfigureAwait(false);
+
+		if (!refreshed) {
+			return CreateEnvelope.Failed("The authorization failed");
+		}
 
 		var createEnvelopeValidator = _createEnvelopeRequestValidator ??= new CreateEnvelopeRequestValidator();
 		var createEnvelopeValidation = createEnvelopeValidator.Validate(request);
@@ -160,17 +162,6 @@ public sealed class DocuSignClient :
 	}
 
 	/// <summary>
-	/// Get the client's diagnostic information.
-	/// </summary>
-	public object GetDiagnosticInformation() => new {
-		Account,
-		AuthorizedAt,
-		IsAuthorized,
-		Options = _options,
-		Urls = _urls
-	};
-
-	/// <summary>
 	/// Get an envelope.
 	/// </summary>
 	/// <param name="request">An instance of <c>GetEnvelope.Request</c> containing the request's parameters.</param>
@@ -183,7 +174,11 @@ public sealed class DocuSignClient :
 			return GetEnvelope.Cancelled;
 		}
 
-		await WaitForAuthorizationAsync().ConfigureAwait(false);
+		var refreshed = await RefreshAuthorizationAsync().ConfigureAwait(false);
+
+		if (!refreshed) {
+			return GetEnvelope.Failed("The authorization failed");
+		}
 
 		var validator = new GetEnvelopeRequestValidator();
 		var validation = validator.Validate(request);
@@ -241,7 +236,11 @@ public sealed class DocuSignClient :
 			return UpdateEnvelope.Cancelled;
 		}
 
-		await WaitForAuthorizationAsync().ConfigureAwait(false);
+		var refreshed = await RefreshAuthorizationAsync().ConfigureAwait(false);
+
+		if (!refreshed) {
+			return UpdateEnvelope.Failed("The authorization failed");
+		}
 
 		var validator = _updateEnvelopeRequestValidator ??= new UpdateEnvelopeRequestValidator();
 		var validation = validator.Validate(request);
@@ -368,9 +367,7 @@ public sealed class DocuSignClient :
 	/// <summary>
 	/// Refresh the authorization.
 	/// </summary>
-	private async Task RefreshAuthorizationAsync() {
-		Account = null;
-
+	private async Task<bool> RefreshAuthorizationAsync() {
 		var jwt = GetJwt();
 		var form = new FormUrlEncodedContent(new[] {
 			new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
@@ -380,13 +377,13 @@ public sealed class DocuSignClient :
 		var authorizationResponse = await _httpClient.PostAsync(_urls.AuthorizationToken, form).ConfigureAwait(false);
 
 		if (!authorizationResponse.IsSuccessStatusCode) {
-			return;
+			return false;
 		}
 
 		var authorization = await authorizationResponse.Content.ReadFromJsonAsync<Authorization>().ConfigureAwait(false);
 
 		if (authorization is null) {
-			return;
+			return false;
 		}
 
 		_httpClient.DefaultRequestHeaders.Remove("Authorization");
@@ -395,17 +392,11 @@ public sealed class DocuSignClient :
 		var userResponse = await _httpClient.GetFromJsonAsync<AuthorizationUser>(_urls.AuthorizationUser).ConfigureAwait(false);
 
 		if (userResponse is null) {
-			return;
+			return false;
 		}
 
 		Account = userResponse.DefaultAccount;
-		AuthorizedAt = DateTimeOffset.Now;
-	}
 
-	/// <summary>
-	/// Waits for the authorization refresh to complete.
-	/// </summary>
-	private Task WaitForAuthorizationAsync() => IsAuthorized
-		? Task.CompletedTask
-		: RefreshAuthorizationAsync();
+		return true;
+	}
 }
