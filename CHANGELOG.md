@@ -1,6 +1,10 @@
+#### 2.0.0 (2023-09-06)
+
+- **Added:** A new implementation for authorization tracking and caching using `IMemoryCache` since it was already a dependency for the library, and was being used in `IDocuSignClientFactory`. Hopefully, authorization regeneration and tracking is more robust now and reduces unnecessary resource usage. It is a breaking change because the `IDocuSign` constructor changed to accept an instance of `IMemoryCache`, thus the major version bump.
+
 #### 1.0.7 (2023-09-05)
 
-- Removed authorization tracking all together. Each call will now refresh the authorization token, which will come with a slight performance impact. Since DocuSign wants to make a ridiculously complicated authorization process under the pretense of "security", I'll just skip it and force their API to generate new tokens on each request.
+- **Removed:** Authorization tracking all together. Each call will now refresh the authorization token, which will come with a slight performance impact. Since DocuSign wants to make a ridiculously complicated authorization process under the pretense of "security", I'll just skip it and force their API to generate new tokens on each request.
 
 #### 1.0.6 (2023-09-05)
 

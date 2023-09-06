@@ -14,10 +14,10 @@ public static class ServiceCollectionExtensions {
 	/// <returns>The service collection.</returns>
 	public static IServiceCollection AddDocuSign(
 		this IServiceCollection services) => services.AddSingleton<IDocuSignClientFactory>(
-		@if => {
-			var httpClientFactory = @if.GetRequiredService<IHttpClientFactory>();
+		sp => {
+			var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
 			var httpClient = httpClientFactory.CreateClient(nameof(DocuSignClientFactory));
-			var memoryCache = @if.GetRequiredService<IMemoryCache>();
+			var memoryCache = sp.GetRequiredService<IMemoryCache>();
 
 			return new DocuSignClientFactory(httpClient, memoryCache);
 		});
@@ -31,10 +31,11 @@ public static class ServiceCollectionExtensions {
 	public static IServiceCollection AddDocuSign(
 		this IServiceCollection services,
 		DocuSignClientOptions options) => services.AddSingleton<IDocuSignClient>(
-		@if => {
-			var httpClientFactory = @if.GetRequiredService<IHttpClientFactory>();
+		sp => {
+			var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
 			var httpClient = httpClientFactory.CreateClient(nameof(DocuSignClient));
+			var memoryCache = sp.GetRequiredService<IMemoryCache>();
 
-			return new DocuSignClient(httpClient, options);
+			return new DocuSignClient(httpClient, memoryCache, options);
 		});
 }

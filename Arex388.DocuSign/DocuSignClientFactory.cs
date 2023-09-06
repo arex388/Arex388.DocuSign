@@ -40,10 +40,12 @@ public sealed class DocuSignClientFactory :
 			return docuSignClient;
 		}
 
-		docuSignClient = new DocuSignClient(_httpClient, options);
+		docuSignClient = new DocuSignClient(_httpClient, _memoryCache, options);
 
 		_memoryCache.Set(key, docuSignClient, _memoryCacheEntryOptions);
 
 		return docuSignClient;
 	}
+
+	//	https://stackoverflow.com/questions/45597057/how-to-retrieve-a-list-of-memory-cache-keys-in-asp-net-core
 }

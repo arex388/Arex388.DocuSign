@@ -1,9 +1,10 @@
-﻿using Xunit;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Xunit;
 
 namespace Arex388.DocuSign.Tests;
 
 public sealed class Envelope {
-	private readonly IDocuSignClient _docuSign = new DocuSignClient(new HttpClient(), new DocuSignClientOptions {
+	private readonly IDocuSignClient _docuSign = new DocuSignClient(new HttpClient(), new MemoryCache(new MemoryCacheOptions()), new DocuSignClientOptions {
 		IntegrationKey = Config.IntegrationKey1,
 		IsProduction = true,
 		PrivateKey = Config.PrivateKey1,

@@ -2,6 +2,7 @@
 using Arex388.DocuSign.Validators;
 using JWT.Algorithms;
 using JWT.Builder;
+using Microsoft.Extensions.Caching.Memory;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
@@ -24,12 +25,14 @@ public sealed class DocuSignClient :
 		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 	};
+	private static readonly MemoryCacheEntryOptions _memoryCacheEntryOptions = new() {
+		AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45),
+		Priority = CacheItemPriority.NeverRemove
+	};
 
 	private readonly HttpClient _httpClient;
+	private readonly IMemoryCache _memoryCache;
 	private readonly DocuSignClientOptions _options;
-	private readonly Urls _urls;
-
-	private AuthorizationUserAccount? Account { get; set; }
 
 	private CreateEnvelopeRequestValidator? _createEnvelopeRequestValidator;
 	private EnvelopeRecipientsValidator? _envelopeRecipientsValidator;
@@ -37,29 +40,22 @@ public sealed class DocuSignClient :
 	private EnvelopeRecipientTabsValidator? _envelopeRecipientTabsValidator;
 	private EnvelopeRecipientTabValidator? _envelopeRecipientTabValidator;
 	private UpdateEnvelopeRequestValidator? _updateEnvelopeRequestValidator;
+	private AuthorizationUrls? _urls;
 	private VoidEnvelopeRequestValidator? _voidEnvelopeRequestValidator;
 
 	/// <summary>
 	/// Create an instance of the DocuSign API client.
 	/// </summary>
 	/// <param name="httpClient">An instance of <c>HttpClient</c>.</param>
+	/// <param name="memoryCache">An instance of <c>MemoryCache</c>.</param>
 	/// <param name="options">An instance of <c>DocuSignClientOptions</c>.</param>
 	public DocuSignClient(
 		HttpClient httpClient,
+		IMemoryCache memoryCache,
 		DocuSignClientOptions options) {
 		_httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+		_memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
 		_options = options ?? throw new ArgumentNullException(nameof(options));
-		_urls = new Urls {
-			Authorization = options.IsProduction
-				? "account.docusign.com"
-				: "account-d.docusign.com",
-			AuthorizationToken = options.IsProduction
-				? "https://account.docusign.com/oauth/token"
-				: "https://account-d.docusign.com/oauth/token",
-			AuthorizationUser = options.IsProduction
-				? "https://account.docusign.com/oauth/userinfo"
-				: "https://account-d.docusign.com/oauth/userinfo"
-		};
 	}
 
 	//	============================================================================
@@ -79,9 +75,9 @@ public sealed class DocuSignClient :
 			return CreateEnvelope.Cancelled;
 		}
 
-		var refreshed = await RefreshAuthorizationAsync().ConfigureAwait(false);
+		var account = await GetAccountAsync().ConfigureAwait(false);
 
-		if (!refreshed) {
+		if (account is null) {
 			return CreateEnvelope.Failed("The authorization failed");
 		}
 
@@ -140,7 +136,7 @@ public sealed class DocuSignClient :
 		}
 
 		try {
-			var response = await _httpClient.PostAsJsonAsync(request.GetEndpoint(Account!), request, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+			var response = await _httpClient.PostAsJsonAsync(request.GetEndpoint(account), request, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
 
 			if (response.IsSuccessStatusCode) {
 				var envelope = await response.Content.ReadFromJsonAsync<Envelope>(_jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
@@ -174,9 +170,9 @@ public sealed class DocuSignClient :
 			return GetEnvelope.Cancelled;
 		}
 
-		var refreshed = await RefreshAuthorizationAsync().ConfigureAwait(false);
+		var account = await GetAccountAsync().ConfigureAwait(false);
 
-		if (!refreshed) {
+		if (account is null) {
 			return GetEnvelope.Failed("The authorization failed");
 		}
 
@@ -192,7 +188,7 @@ public sealed class DocuSignClient :
 		}
 
 		try {
-			var response = await _httpClient.GetAsync(request.GetEndpoint(Account!), cancellationToken).ConfigureAwait(false);
+			var response = await _httpClient.GetAsync(request.GetEndpoint(account), cancellationToken).ConfigureAwait(false);
 
 			if (response.IsSuccessStatusCode) {
 				var envelope = await response.Content.ReadFromJsonAsync<Envelope>(_jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
@@ -236,9 +232,9 @@ public sealed class DocuSignClient :
 			return UpdateEnvelope.Cancelled;
 		}
 
-		var refreshed = await RefreshAuthorizationAsync().ConfigureAwait(false);
+		var account = await GetAccountAsync().ConfigureAwait(false);
 
-		if (!refreshed) {
+		if (account is null) {
 			return UpdateEnvelope.Failed("The authorization failed");
 		}
 
@@ -254,7 +250,7 @@ public sealed class DocuSignClient :
 		}
 
 		try {
-			var response = await _httpClient.PutAsJsonAsync(request.GetEndpoint(Account!), request, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+			var response = await _httpClient.PutAsJsonAsync(request.GetEndpoint(account), request, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
 
 			if (response.IsSuccessStatusCode) {
 				return new UpdateEnvelope.Response {
@@ -321,10 +317,55 @@ public sealed class DocuSignClient :
 	//	============================================================================
 
 	/// <summary>
+	/// Returns the authorization account.
+	/// </summary>
+	private async Task<AuthorizationUserAccount?> GetAccountAsync() {
+		var key = $"{nameof(Arex388)}.{nameof(DocuSign)}.Key[{_options.IntegrationKey}].Account";
+
+		if (_memoryCache.TryGetValue(key, out AuthorizationUserAccount? account)
+			&& account is not null) {
+			return account;
+		}
+
+		var urls = GetUrls();
+		var jwt = GetJwt(urls);
+		var form = new FormUrlEncodedContent(new[] {
+			new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
+			new KeyValuePair<string, string>("assertion", jwt)
+		});
+
+		var authorizationResponse = await _httpClient.PostAsync(urls.AuthorizationToken, form).ConfigureAwait(false);
+
+		if (!authorizationResponse.IsSuccessStatusCode) {
+			return null;
+		}
+
+		var authorization = await authorizationResponse.Content.ReadFromJsonAsync<Authorization>().ConfigureAwait(false);
+
+		if (authorization is null) {
+			return null;
+		}
+
+		_httpClient.DefaultRequestHeaders.Remove("Authorization");
+		_httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authorization.Token}");
+
+		var userResponse = await _httpClient.GetFromJsonAsync<AuthorizationUser>(urls.AuthorizationUser).ConfigureAwait(false);
+
+		if (userResponse is null) {
+			return null;
+		}
+
+		_memoryCache.Set(key, userResponse.DefaultAccount, _memoryCacheEntryOptions);
+
+		return userResponse.DefaultAccount;
+	}
+
+	/// <summary>
 	/// Returns the generated JWT.
 	/// </summary>
 	/// <returns>The JWT.</returns>
-	private string GetJwt() {
+	private string GetJwt(
+		AuthorizationUrls urls) {
 		var epoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		var privateRsa = GetRsa(_options.PrivateKey, true);
 		var publicRsa = GetRsa(_options.PublicKey);
@@ -333,7 +374,7 @@ public sealed class DocuSignClient :
 						 .WithAlgorithm(new RS256Algorithm(publicRsa, privateRsa))
 						 .AddClaim("iss", _options.IntegrationKey)
 						 .AddClaim("sub", _options.UserId)
-						 .AddClaim("aud", _urls.Authorization)
+						 .AddClaim("aud", urls.Authorization)
 						 .AddClaim("iat", epoch)
 						 .AddClaim("exp", epoch + 6000)
 						 .AddClaim("scope", "signature impersonation")
@@ -365,38 +406,17 @@ public sealed class DocuSignClient :
 	}
 
 	/// <summary>
-	/// Refresh the authorization.
+	/// Returns the URLs for authorization generation.
 	/// </summary>
-	private async Task<bool> RefreshAuthorizationAsync() {
-		var jwt = GetJwt();
-		var form = new FormUrlEncodedContent(new[] {
-			new KeyValuePair<string, string>("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
-			new KeyValuePair<string, string>("assertion", jwt)
-		});
-
-		var authorizationResponse = await _httpClient.PostAsync(_urls.AuthorizationToken, form).ConfigureAwait(false);
-
-		if (!authorizationResponse.IsSuccessStatusCode) {
-			return false;
+	private AuthorizationUrls GetUrls() => _urls ??= _options.IsProduction
+		? new AuthorizationUrls {
+			Authorization = "account.docusign.com",
+			AuthorizationToken = "https://account.docusign.com/oauth/token",
+			AuthorizationUser = "https://account.docusign.com/oauth/userinfo"
 		}
-
-		var authorization = await authorizationResponse.Content.ReadFromJsonAsync<Authorization>().ConfigureAwait(false);
-
-		if (authorization is null) {
-			return false;
-		}
-
-		_httpClient.DefaultRequestHeaders.Remove("Authorization");
-		_httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authorization.Token}");
-
-		var userResponse = await _httpClient.GetFromJsonAsync<AuthorizationUser>(_urls.AuthorizationUser).ConfigureAwait(false);
-
-		if (userResponse is null) {
-			return false;
-		}
-
-		Account = userResponse.DefaultAccount;
-
-		return true;
-	}
+		: new AuthorizationUrls {
+			Authorization = "account-d.docusign.com",
+			AuthorizationToken = "https://account-d.docusign.com/oauth/token",
+			AuthorizationUser = "https://account-d.docusign.com/oauth/userinfo"
+		};
 }
