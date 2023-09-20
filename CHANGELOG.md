@@ -1,3 +1,7 @@
+#### 2.0.1 (2023-09-15)
+
+- **Added:** A validation rule for the envelope email subject length to be less than or equal to 100 characters.
+
 #### 2.0.0 (2023-09-06)
 
 - **Added:** A new implementation for authorization tracking and caching using `IMemoryCache` since it was already a dependency for the library, and was being used in `IDocuSignClientFactory`. Hopefully, authorization regeneration and tracking is more robust now and reduces unnecessary resource usage. It is a breaking change because the `IDocuSign` constructor changed to accept an instance of `IMemoryCache`, thus the major version bump.
@@ -34,4 +38,4 @@
 
 #### 1.0.0 (2023-08-21)
 
-- Initial implementation.
+- Initial release.
