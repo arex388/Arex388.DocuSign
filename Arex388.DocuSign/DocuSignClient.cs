@@ -7,6 +7,7 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -346,8 +347,9 @@ public sealed class DocuSignClient :
 			return null;
 		}
 
-		_httpClient.DefaultRequestHeaders.Remove("Authorization");
-		_httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authorization.Token}");
+		//_httpClient.DefaultRequestHeaders.Remove("Authorization");
+		_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authorization.Token);
+		//_httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authorization.Token}");
 
 		var userResponse = await _httpClient.GetFromJsonAsync<AuthorizationUser>(urls.AuthorizationUser).ConfigureAwait(false);
 

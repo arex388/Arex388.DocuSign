@@ -1,10 +1,11 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Arex388.DocuSign.Benchmarks;
 
 [MaxIterationCount(16), MemoryDiagnoser]
 public class Envelope {
-	private readonly IDocuSignClient _docuSign = new DocuSignClient(new HttpClient(), new DocuSignClientOptions {
+	private readonly IDocuSignClient _docuSign = new DocuSignClient(new HttpClient(),  new MemoryCache(new MemoryCacheOptions()), new DocuSignClientOptions {
 		IntegrationKey = Config.IntegrationKey,
 		PrivateKey = Config.PrivateKey,
 		PublicKey = Config.PublicKey,

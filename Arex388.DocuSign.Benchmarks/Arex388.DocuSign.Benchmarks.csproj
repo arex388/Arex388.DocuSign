@@ -6,11 +6,11 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net7.0</TargetFramework>
 		<UserSecretsId>480cad47-a3aa-4589-8ca6-464bd8d27158</UserSecretsId>
-		<Version>2.0.1</Version>
+		<Version>2.0.3</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
+		<PackageReference Include="BenchmarkDotNet" Version="0.13.9" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
 	</ItemGroup>

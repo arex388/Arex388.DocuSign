@@ -1,3 +1,11 @@
+#### 2.0.3 (2023-10-21)
+
+- **Changed:** How authorization header is changed on the `HttpClient` because the current implementation was throwing exceptions.
+
+#### 2.0.2 (2023-09-27)
+
+- **Updated:** Package dependencies.
+
 #### 2.0.1 (2023-09-15)
 
 - **Added:** A validation rule for the envelope email subject length to be less than or equal to 100 characters.
